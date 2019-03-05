@@ -12,6 +12,7 @@ var generateButton = document.getElementById('generateButton');
 var canvas = document.getElementById('canvas');
 var backgroundImage = document.getElementById('backgroundImage');
 var editor;
+
 // some functions to get you started !!
 
 function log(msg) {
@@ -24,19 +25,61 @@ function photoEditor(backgroundImage, canvas, image) {
   let context = canvas.getContext('2d');
   let containerWidth = 600;
   let containerHeight = 600;
+  let canvasWidth = 450;
+  let canvasHeight = 300;
+  let canvasLeftPadding = (containerWidth - 450) / 2;
+  let canvasTopPadding = (containerHeight - 300) / 2;
   let imageWidth = image.naturalWidth;
   let imageHeight = image.naturalHeight;
   let isLandscape = imageWidth > imageHeight;
+  let currentBackgroundImageInfo = {};
   var ret = {
     start: function() {
-      context.drawImage(image, 0, 0);
       backgroundImage.src = image.src;
+      this.initBackgroundImageSizeAndPosition();
+      imageContainer.addEventListener('mousedown', function(e) {
+        console.log(e);
+      });
     },
-    updateBackgroundImageSizeAndPosition: function() {
-      if(isLandscape){
-
+    initBackgroundImageSizeAndPosition: function() {
+      console.log(isLandscape);
+      if (isLandscape) {
+        const width = imageWidth / imageHeight * containerWidth;
+        this.updateBackgroundImageSizeAndPosition(0, 0, width, containerHeight);
+      } else {
+        const height = imageHeight / imageWidth * containerHeight;
+        this.updateBackgroundImageSizeAndPosition(0, 0, containerWidth, height);
       }
     },
+    updateBackgroundImageSizeAndPosition: function(x, y, width, height) {
+      console.log('updateBackgroundImageSizeAndPosition: x=' + x + ', y=' + y +
+        ', width=' + width + ', height=' + height);
+      backgroundImage.style.left = x + 'px';
+      backgroundImage.style.top = y + 'px';
+      backgroundImage.style.width = width + 'px';
+      backgroundImage.style.height = height + 'px';
+      currentBackgroundImageInfo = {
+        left: x,
+        top: y,
+        width: width,
+        height: height,
+      };
+      this.updateCanvasDisplay();
+    },
+
+    updateCanvasDisplay: function() {
+      const x = canvasLeftPadding - currentBackgroundImageInfo.left;
+      const y = canvasTopPadding - currentBackgroundImageInfo.top;
+      console.log('updateCanvasDisplay : x=' + x + ', y=' + y + ', width=' +
+        currentBackgroundImageInfo.width + ', height=' +
+        currentBackgroundImageInfo.height);
+      //context.drawImage(image, x, y, currentBackgroundImageInfo.width,
+      //  currentBackgroundImageInfo.height);
+
+      context.drawImage(image, -x, -y, backgroundImage.width,
+        backgroundImage.height);
+    },
+
     setBodyScrollEnable: function(enable) {
       if (enable) {
         document.body.style.overflow = 'auto';
@@ -74,7 +117,7 @@ fileSelector.onchange = function(e) {
             };
             log('Loaded Image w/dimensions ' + imageData.width + ' x ' +
               imageData.height);
-            editor = photoEditor(backgroundImage, canvas, img, );
+            editor = photoEditor(backgroundImage, canvas, img);
             editor.start();
 
           };
