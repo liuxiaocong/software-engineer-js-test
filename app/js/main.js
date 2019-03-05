@@ -39,6 +39,10 @@ function photoEditor(
   const isLandscape = imageWidth > imageHeight;
   const imageContainerStartPosition = {};
   const sizeControllerStartPosition = {};
+  const maxScaleTimes = 5;
+  let minScaleTimes = 1;
+  let initSizeControlPosition = 1;
+  let sizeControlStep = (maxScaleTimes + minScaleTimes - 1) / 300;
   let currentBackgroundImageInfo = {};
   let isSizeControllerDragging = false;
   let isDragging = false;
@@ -78,6 +82,18 @@ function photoEditor(
 
     initSizeControl: function() {
       console.log('initSizeControl');
+      if (currentBackgroundImageInfo.orginalHeight / canvasHeight >
+        currentBackgroundImageInfo.orginalWidth / canvasWidth) {
+        minScaleTimes = 1 / (currentBackgroundImageInfo.orginalWidth / canvasWidth);
+      } else {
+        minScaleTimes = 1 / (currentBackgroundImageInfo.orginalHeight / canvasHeight);
+      }
+      sizeControlStep = (maxScaleTimes + minScaleTimes) / 300;
+      initSizeControlPosition = ((1 - minScaleTimes) / sizeControlStep);
+      console.log(sizeControlStep);
+      console.log(initSizeControlPosition);
+      sizeController.style.left = initSizeControlPosition + 'px';
+
       sizeControllerWrap.addEventListener('mousedown', (e) => {
         console.log('mousedown');
         isSizeControllerDragging = true;
@@ -106,16 +122,26 @@ function photoEditor(
       });
     },
 
-    updateImageSizeWithControl: function(size) {
-      let scale = 1;
-      if (size > 1) {
-        scale = (1 + size / 100).toFixed(2);
+    updateImageSizeWithControl: function(sizeControlX) {
+      let scale = 1 + (sizeControlX - initSizeControlPosition) * sizeControlStep;
+      console.log(scale);
+      if (scale < minScaleTimes) {
+        scale = minScaleTimes;
       }
-      if (scale > 5) {
-        scale = 5;
+      if (scale > maxScaleTimes) {
+        scale = maxScaleTimes;
       }
-      const width = currentBackgroundImageInfo.orginalWidth * scale;
-      const height = currentBackgroundImageInfo.orginalWidth * scale;
+      console.log(scale);
+      let width = currentBackgroundImageInfo.orginalWidth * scale;
+      let height = currentBackgroundImageInfo.orginalHeight * scale;
+      if (width < canvasWidth) {
+        width = canvasWidth;
+        height = currentBackgroundImageInfo.orginalHeight / currentBackgroundImageInfo.orginalWidth * width;
+      }
+      if (height < canvasHeight) {
+        height = canvasHeight;
+        width = currentBackgroundImageInfo.orginalWidth / currentBackgroundImageInfo.orginalHeight * height;
+      }
       const xNeedMove = (width - currentBackgroundImageInfo.width) / 2;
       const yNeedMove = (height - currentBackgroundImageInfo.height) / 2;
       const x = currentBackgroundImageInfo.x - xNeedMove;
