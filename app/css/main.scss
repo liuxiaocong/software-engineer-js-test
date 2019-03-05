@@ -52,6 +52,47 @@ body {
   }
 }
 
+.topWrap {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.sizeControlWrap {
+  width: 340px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  .label {
+    display: inline-block;
+    width: 20px;
+    line-height: 20px;
+    flex-shrink: 0;
+    text-align: center;
+  }
+  .controlBarWrap {
+    flex-grow: 1;
+    background: #DDD;
+    border-radius: 8px;
+    line-height: 16px;
+    height: 16px;
+    position: relative;
+    .controller {
+      position: absolute;
+      display: inline-block;
+      height: 20px;
+      width: 10px;
+      left: 0;
+      top: 0;
+      background: red;
+      margin-top: -2px;
+    }
+    .controlProgress {
+      background: #108ee9;
+    }
+  }
+}
+
 #debugContainer {
   p {
     margin: 0;

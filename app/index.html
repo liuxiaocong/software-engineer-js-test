@@ -14,8 +14,19 @@
     </p>
     <form action="#">
       <fieldset>
-        <label for="fileSelector">Select an Image file</label>
-        <input type="file" id="fileSelector"/>
+        <div class="topWrap">
+          <label for="fileSelector">Select an Image file</label>
+          <input type="file" id="fileSelector"/>
+          <span>Size control:</span>
+          <div class="sizeControlWrap">
+            <span class="label">-</span>
+            <div class="controlBarWrap" id="sizeControllerWrap">
+              <div class="controlProgress" id="sizeControlProgress"></div>
+              <span class="controller" id="sizeController"></span>
+            </div>
+            <span class="label">+</span>
+          </div>
+        </div>
       </fieldset>
     </form>
     <div class="container">
