@@ -20,6 +20,7 @@
 //  }
 //}
 var photoEditor = require('./photoEditor');
+var { lastDescriptionKey, lastImageDataKey, lastImageNameKey } = require('./constant');
 var imageContainer = document.getElementById('imageContainer');
 var debugContainer = document.getElementById('debugContainer');
 var generateButton = document.getElementById('generateButton');
@@ -36,6 +37,11 @@ var editor;
 function log(msg) {
   // show debug/state message on screen
   debugContainer.innerHTML += '<p>' + msg + '</p>';
+}
+
+// detect last action
+if (localStorage.getItem(lastDescriptionKey) && localStorage.getItem(lastImageDataKey)) {
+  loadPreviousButton.style.display = 'inline-block';
 }
 
 fileSelector.onchange = function(e) {
@@ -86,13 +92,31 @@ fileSelector.onchange = function(e) {
 generateButton.onclick = function(e) {
   log('GENERATE BUTTON CLICKED!! Should this do something else?');
   if (editor) {
-    editor.showDescription();
+    log(editor.showDescription());
   }
 };
 
 loadPreviousButton.onclick = function(e) {
   if (editor) {
     editor.restoreLastDescription();
+  } else {
+    const lastImageData = localStorage.getItem(lastImageDataKey);
+    const lastDescription = localStorage.getItem(lastDescriptionKey);
+    if (!lastImageData || !lastDescription) return;
+    let img = new Image();
+    img.src = lastImageData;
+    img.onload = function() {
+      var imageData = {
+        'width': img.naturalWidth,
+        'height': img.naturalHeight,
+      };
+      log('Loaded Image w/dimensions ' + imageData.width + ' x ' +
+        imageData.height);
+      editor = photoEditor(backgroundImage, canvas, img, imageContainer, sizeControllerWrap, sizeController,
+        sizeControlProgress, loadPreviousButton, lastImageData, localStorage.getItem(lastImageNameKey) || '');
+      editor.start();
+      log('Ignore the text "No file chosen", it care it we can use some css and js to optimize');
+    };
   }
 };
 log('Test application ready');

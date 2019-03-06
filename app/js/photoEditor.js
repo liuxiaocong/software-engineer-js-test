@@ -1,3 +1,4 @@
+var { lastDescriptionKey, lastImageDataKey, lastImageNameKey } = require('./constant');
 const photoEditor = (
   backgroundImage,
   canvas,
@@ -22,14 +23,15 @@ const photoEditor = (
   const imageContainerStartPosition = {};
   const sizeControllerStartPosition = {};
   const maxScaleTimes = 5;
-  const lastDescriptionKey = 'canvas_last_description';
-  const lastImageDataKey = 'canvas_last_image_data';
   const description = {
     lastDescription: null,
     lastImageData: null,
+    lastImageName: '',
   };
   description.lastImageData = localStorage.getItem(lastImageDataKey);
-  description.last = localStorage.getItem(lastDescriptionKey);
+  description.lastDescription = localStorage.getItem(lastDescriptionKey);
+  description.lastImageName = localStorage.getItem(lastImageNameKey);
+
   let image = loadedImage;
   let imageWidth = image.naturalWidth;
   let imageHeight = image.naturalHeight;
@@ -46,7 +48,6 @@ const photoEditor = (
       backgroundImage.src = image.src;
       this.initBackgroundImageSizeAndPosition();
       this.initSizeControl();
-      this.detectLastAction();
       imageContainer.addEventListener('mousedown', (e) => {
         console.log('mousedown>>>>>>>>>>>>>>>>>>>');
         isDragging = true;
@@ -218,12 +219,6 @@ const photoEditor = (
       }
     },
 
-    detectLastAction: function() {
-      if (description.lastImageData && description.lastDescription) {
-        loadPreviousButton.style.display = 'inline-block';
-      }
-    },
-
     showDescription: function() {
       console.log(canvasLeftPadding);
       console.log(backgroundImage.x);
@@ -242,13 +237,17 @@ const photoEditor = (
       };
       description.lastDescription = data;
       description.lastImageData = readerResult;
+      description.lastImageName = fileName;
       loadPreviousButton.style.display = 'inline-block';
 
       localStorage.setItem(lastDescriptionKey, data);
       localStorage.setItem(lastImageDataKey, readerResult);
+      localStorage.setItem(lastImageNameKey, fileName);
+
       console.log('current x:' + currentBackgroundImageInfo.x);
       console.log('current y:' + currentBackgroundImageInfo.y);
       alert(JSON.stringify(data));
+      return JSON.stringify(data);
     },
 
     restoreLastDescription: function() {
@@ -258,10 +257,6 @@ const photoEditor = (
         let that = this;
         img.onload = function() {
           // grab some data from the image
-          let imageData = {
-            'width': img.naturalWidth,
-            'height': img.naturalHeight,
-          };
           image = img;
           imageWidth = image.naturalWidth;
           imageHeight = image.naturalHeight;
