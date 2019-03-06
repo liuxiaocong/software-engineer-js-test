@@ -89,7 +89,19 @@ body {
     }
     .controlProgress {
       background: #108ee9;
+      height: 16px;
+      border-top-left-radius: 8px;
+      border-bottom-left-radius: 8px;
     }
+  }
+}
+
+.actionsWrap {
+  button {
+    margin: 10px 20px;
+  }
+  #loadPrevious {
+    display: none;
   }
 }
 
