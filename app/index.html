@@ -16,7 +16,11 @@
       <fieldset>
         <div class="topWrap">
           <label for="fileSelector">Select an Image file</label>
-          <input type="file" id="fileSelector"/>
+          <span class="fileWrap">
+            <input type="file" id="fileSelector" class="fileSelector"/>
+            <button>choose File</button>
+            <span id="fileName" class="fileName">No File Chosen</span>
+          </span>
           <span>Size control:</span>
           <div class="sizeControlWrap">
             <span class="label">-</span>

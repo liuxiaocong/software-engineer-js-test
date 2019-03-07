@@ -1,4 +1,4 @@
-var { lastDescriptionKey, lastImageDataKey, lastImageNameKey } = require('./constant');
+var { lastDescriptionKey, lastActionInfoKey } = require('./constant');
 const photoEditor = (
   backgroundImage,
   canvas,
@@ -8,7 +8,8 @@ const photoEditor = (
   sizeController,
   sizeControlProgress,
   loadPreviousButton,
-  readerResult,
+  fileNameDom,
+  initReaderResult,
   fileName,) => {
   const inchToPx = 96;
   const targetWidth = inchToPx * 15; // inches
@@ -25,13 +26,18 @@ const photoEditor = (
   const maxScaleTimes = 5;
   const description = {
     lastDescription: null,
-    lastImageData: null,
-    lastImageName: '',
+    lastActionInfo: null,
   };
-  description.lastImageData = localStorage.getItem(lastImageDataKey);
-  description.lastDescription = localStorage.getItem(lastDescriptionKey);
-  description.lastImageName = localStorage.getItem(lastImageNameKey);
+  try {
+    description.lastDescription = localStorage.getItem(lastDescriptionKey) &&
+      JSON.parse(localStorage.getItem(lastDescriptionKey));
+    description.lastActionInfo = localStorage.getItem(lastActionInfoKey) &&
+      JSON.parse(localStorage.getItem(lastActionInfoKey));
+  } catch (ex) {
+    console.error(ex);
+  }
 
+  let readerResult = initReaderResult;
   let image = loadedImage;
   let imageWidth = image.naturalWidth;
   let imageHeight = image.naturalHeight;
@@ -46,10 +52,10 @@ const photoEditor = (
   var ret = {
     start: function() {
       backgroundImage.src = image.src;
+      this.updateFileName();
       this.initBackgroundImageSizeAndPosition();
       this.initSizeControl();
       imageContainer.addEventListener('mousedown', (e) => {
-        console.log('mousedown>>>>>>>>>>>>>>>>>>>');
         isDragging = true;
         imageContainerStartPosition.x = e.clientX;
         imageContainerStartPosition.y = e.clientY;
@@ -57,7 +63,6 @@ const photoEditor = (
         imageContainerStartPosition.imageY = currentBackgroundImageInfo.y;
       });
       imageContainer.addEventListener('mouseup', (e) => {
-        console.log('mouseup');
         isDragging = false;
       });
       imageContainer.addEventListener('mousemove', (e) => {
@@ -76,6 +81,10 @@ const photoEditor = (
       });
     },
 
+    updateFileName: function() {
+      fileNameDom.innerText = fileName ? fileName : 'No File Chosen';
+    },
+
     initSizeControl: function() {
       console.log('initSizeControl');
       if (currentBackgroundImageInfo.orginalHeight / canvasHeight >
@@ -89,16 +98,15 @@ const photoEditor = (
       console.log(sizeControlStep);
       console.log(initSizeControlPosition);
       sizeController.style.left = initSizeControlPosition + 'px';
+      sizeControlProgress.style.width = (initSizeControlPosition / 300) * 100 + '%';
 
       sizeControllerWrap.addEventListener('mousedown', (e) => {
-        console.log('mousedown');
         isSizeControllerDragging = true;
         sizeControllerStartPosition.left = sizeController.style.left ? parseInt(sizeController.style.left) : 0;
         sizeControllerStartPosition.x = e.clientX;
         sizeControllerStartPosition.y = e.clientY;
       });
       sizeControllerWrap.addEventListener('mouseup', (e) => {
-        console.log('mouseup');
         isSizeControllerDragging = false;
       });
       sizeControllerWrap.addEventListener('mousemove', (e) => {
@@ -121,14 +129,12 @@ const photoEditor = (
 
     updateImageSizeWithControl: function(sizeControlX) {
       let scale = 1 + (sizeControlX - initSizeControlPosition) * sizeControlStep;
-      console.log(scale);
       if (scale < minScaleTimes) {
         scale = minScaleTimes;
       }
       if (scale > maxScaleTimes) {
         scale = maxScaleTimes;
       }
-      console.log(scale);
       let width = currentBackgroundImageInfo.orginalWidth * scale;
       let height = currentBackgroundImageInfo.orginalHeight * scale;
       if (width < canvasWidth) {
@@ -162,8 +168,8 @@ const photoEditor = (
       }
     },
     updateBackgroundImageSizeAndPosition: function(x, y, width, height) {
-      console.log('updateBackgroundImageSizeAndPosition: x=' + x + ', y=' + y +
-        ', width=' + width + ', height=' + height);
+      //console.log('updateBackgroundImageSizeAndPosition: x=' + x + ', y=' + y +
+      //  ', width=' + width + ', height=' + height);
       const maxX = canvasLeftPadding;
       const maxY = canvasTopPadding;
       // minX + currentBackgroundImageInfo.width > canvasLeftPadding + canvasWidth;
@@ -185,7 +191,6 @@ const photoEditor = (
       if (top < minY) {
         top = minY;
       }
-      console.log(left);
       backgroundImage.style.left = left + 'px';
       backgroundImage.style.top = top + 'px';
       backgroundImage.style.width = width + 'px';
@@ -202,8 +207,8 @@ const photoEditor = (
     updateCanvasDisplay: function() {
       const x = canvasLeftPadding - currentBackgroundImageInfo.x;
       const y = canvasTopPadding - currentBackgroundImageInfo.y;
-      console.log('updateCanvasDisplay : x=' + x + ', y=' + y + ', width=' + currentBackgroundImageInfo.width +
-        ', height=' + currentBackgroundImageInfo.height);
+      //console.log('updateCanvasDisplay : x=' + x + ', y=' + y + ', width=' + currentBackgroundImageInfo.width +
+      //  ', height=' + currentBackgroundImageInfo.height);
       //context.drawImage(image, x, y, currentBackgroundImageInfo.width,
       //  currentBackgroundImageInfo.height);
 
@@ -219,56 +224,81 @@ const photoEditor = (
       }
     },
 
+    convertBackgroundImageInfoToInch: function() {
+      return {
+        width: (currentBackgroundImageInfo.width * covertRate / inchToPx).toFixed(2),
+        height: (currentBackgroundImageInfo.height * covertRate / inchToPx).toFixed(2),
+        x: ((canvasLeftPadding - currentBackgroundImageInfo.x) * covertRate / inchToPx).toFixed(2),
+        y: ((canvasTopPadding - currentBackgroundImageInfo.y) * covertRate / inchToPx).toFixed(2),
+      };
+    },
+
+    convertInchToBackgroundImageInfo: function(width, height, x, y) {
+      return {
+        width: width * inchToPx / covertRate,
+        height: height * inchToPx / covertRate,
+        x: canvasLeftPadding - x * inchToPx / covertRate,
+        y: canvasTopPadding - y * inchToPx / covertRate,
+      };
+    },
+
     showDescription: function() {
-      console.log(canvasLeftPadding);
-      console.log(backgroundImage.x);
-      const data = {
+      console.log(currentBackgroundImageInfo);
+      const backgroundImageInfoToInch = this.convertBackgroundImageInfoToInch();
+      const lastDescription = {
         'canvas': {
           'width': 15,
           'height': 10,
           'photo': {
             'id': fileName,
-            'width': (currentBackgroundImageInfo.width * covertRate / inchToPx).toFixed(2),
-            'height': (currentBackgroundImageInfo.height * covertRate / inchToPx).toFixed(2),
-            'x': ((canvasLeftPadding - currentBackgroundImageInfo.x) * covertRate / inchToPx).toFixed(2),
-            'y': ((canvasTopPadding - currentBackgroundImageInfo.y) * covertRate / inchToPx).toFixed(2),
+            'width': backgroundImageInfoToInch.width,
+            'height': backgroundImageInfoToInch.height,
+            'x': backgroundImageInfoToInch.x,
+            'y': backgroundImageInfoToInch.y,
           },
         },
       };
-      description.lastDescription = data;
-      description.lastImageData = readerResult;
-      description.lastImageName = fileName;
+      const lastActionInfo = {
+        imageData: readerResult,
+        imageName: fileName,
+        sizeControllerLeft: sizeController.style.left,
+        sizeControlProgressWidth: sizeControlProgress.style.width,
+      };
+
+      description.lastDescription = lastDescription;
+      description.lastActionInfo = lastActionInfo;
       loadPreviousButton.style.display = 'inline-block';
 
-      localStorage.setItem(lastDescriptionKey, data);
-      localStorage.setItem(lastImageDataKey, readerResult);
-      localStorage.setItem(lastImageNameKey, fileName);
+      localStorage.setItem(lastDescriptionKey, JSON.stringify(lastDescription));
+      localStorage.setItem(lastActionInfoKey, JSON.stringify(lastActionInfo));
 
-      console.log('current x:' + currentBackgroundImageInfo.x);
-      console.log('current y:' + currentBackgroundImageInfo.y);
-      alert(JSON.stringify(data));
-      return JSON.stringify(data);
+      alert(JSON.stringify(lastDescription));
+      return JSON.stringify(lastDescription);
     },
 
     restoreLastDescription: function() {
-      if (description.lastImageData && description.lastDescription) {
+      if (description.lastDescription && description.lastActionInfo) {
         let img = new Image();
-        img.src = description.lastImageData;
+        img.src = description.lastActionInfo.imageData;
+        readerResult = description.lastActionInfo.imageData;
         let that = this;
         img.onload = function() {
           // grab some data from the image
           image = img;
+          fileName = description.lastActionInfo.imageName || '';
           imageWidth = image.naturalWidth;
           imageHeight = image.naturalHeight;
           isLandscape = imageWidth > imageHeight;
           that.start();
-          const toX = canvasLeftPadding - description.lastDescription.canvas.photo.x * inchToPx / covertRate;
-          const toY = canvasTopPadding - description.lastDescription.canvas.photo.y * inchToPx / covertRate;
-          console.log('to x:' + toX);
-          console.log('to y:' + toY);
-          that.updateBackgroundImageSizeAndPosition(toX, toY,
-            description.lastDescription.canvas.photo.width * inchToPx / covertRate,
-            description.lastDescription.canvas.photo.height * inchToPx / covertRate);
+          console.log(description);
+          const photo = description.lastDescription.canvas.photo;
+          const backgroundInfoInPx = that.convertInchToBackgroundImageInfo(photo.width, photo.height, photo.x, photo.y);
+          console.log(backgroundInfoInPx);
+          that.updateBackgroundImageSizeAndPosition(backgroundInfoInPx.x, backgroundInfoInPx.y,
+            backgroundInfoInPx.width,
+            backgroundInfoInPx.height);
+          sizeController.style.left = description.lastActionInfo.sizeControllerLeft;
+          sizeControlProgress.style.width = description.lastActionInfo.sizeControlProgressWidth;
         };
       }
     },

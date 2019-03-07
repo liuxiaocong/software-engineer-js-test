@@ -92,8 +92,29 @@ body {
       height: 16px;
       border-top-left-radius: 8px;
       border-bottom-left-radius: 8px;
+      width: 0;
     }
   }
+}
+
+.fileWrap {
+  display: inline-block;
+  position: relative;
+  padding: 0 10px;
+  .fileName {
+    font-size: 11px;
+    margin: 0 5px;
+    color: #333;
+  }
+}
+
+.fileSelector {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0;
 }
 
 .actionsWrap {

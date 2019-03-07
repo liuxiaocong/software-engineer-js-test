@@ -20,7 +20,7 @@
 //  }
 //}
 var photoEditor = require('./photoEditor');
-var { lastDescriptionKey, lastImageDataKey, lastImageNameKey } = require('./constant');
+var { lastDescriptionKey, lastActionInfoKey } = require('./constant');
 var imageContainer = document.getElementById('imageContainer');
 var debugContainer = document.getElementById('debugContainer');
 var generateButton = document.getElementById('generateButton');
@@ -30,6 +30,7 @@ var canvas = document.getElementById('canvas');
 var sizeControllerWrap = document.getElementById('sizeControllerWrap');
 var sizeController = document.getElementById('sizeController');
 var sizeControlProgress = document.getElementById('sizeControlProgress');
+var fileNameDom = document.getElementById('fileName');
 var editor;
 
 // some functions to get you started !!
@@ -40,7 +41,7 @@ function log(msg) {
 }
 
 // detect last action
-if (localStorage.getItem(lastDescriptionKey) && localStorage.getItem(lastImageDataKey)) {
+if (localStorage.getItem(lastDescriptionKey) && localStorage.getItem(lastActionInfoKey)) {
   loadPreviousButton.style.display = 'inline-block';
 }
 
@@ -73,7 +74,7 @@ fileSelector.onchange = function(e) {
             log('Loaded Image w/dimensions ' + imageData.width + ' x ' +
               imageData.height);
             editor = photoEditor(backgroundImage, canvas, img, imageContainer, sizeControllerWrap, sizeController,
-              sizeControlProgress, loadPreviousButton, reader.result, file.name);
+              sizeControlProgress, loadPreviousButton, fileNameDom, reader.result, file.name);
             editor.start();
 
           };
@@ -97,14 +98,16 @@ generateButton.onclick = function(e) {
 };
 
 loadPreviousButton.onclick = function(e) {
+  // restore selector status , fix select same file issue
+  fileSelector.value = '';
   if (editor) {
     editor.restoreLastDescription();
   } else {
-    const lastImageData = localStorage.getItem(lastImageDataKey);
-    const lastDescription = localStorage.getItem(lastDescriptionKey);
-    if (!lastImageData || !lastDescription) return;
+    const lastDescription = localStorage.getItem(lastDescriptionKey) && JSON.parse(localStorage.getItem(lastDescriptionKey));
+    const lastActionInfo = localStorage.getItem(lastActionInfoKey) && JSON.parse(localStorage.getItem(lastActionInfoKey));
+    if (!lastActionInfo || !lastDescription) return;
     let img = new Image();
-    img.src = lastImageData;
+    img.src = lastActionInfo.imageData;
     img.onload = function() {
       var imageData = {
         'width': img.naturalWidth,
@@ -113,9 +116,11 @@ loadPreviousButton.onclick = function(e) {
       log('Loaded Image w/dimensions ' + imageData.width + ' x ' +
         imageData.height);
       editor = photoEditor(backgroundImage, canvas, img, imageContainer, sizeControllerWrap, sizeController,
-        sizeControlProgress, loadPreviousButton, lastImageData, localStorage.getItem(lastImageNameKey) || '');
+        sizeControlProgress, loadPreviousButton, fileNameDom, lastActionInfo.imageData,
+        lastActionInfo.imageName || '');
       editor.start();
-      log('Ignore the text "No file chosen", it care it we can use some css and js to optimize');
+      editor.restoreLastDescription();
+      // log('Ignore the text "No file chosen", it care it we can use some css and js to optimize');
     };
   }
 };
